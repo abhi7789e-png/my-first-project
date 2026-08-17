@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Are You Good?</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #f4f6f8;
+      transition: background-color 0.4s ease;
+    }
+    body.good {
+      background-color: #e8f5e9;
+    }
+    .card {
+      background: #ffffff;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 350px;
+      width: 90%;
+    }
+    h1 {
+      font-size: 1.8rem;
+      color: #333333;
+      margin-bottom: 20px;
+    }
+    .status-text {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 25px;
+      color: #e53935;
+    }
+    body.good .status-text {
+      color: #2e7d32;
+    }
+    .toggle-btn {
+      padding: 14px 32px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      color: #ffffff;
+      background-color: #e53935;
+      box-shadow: 0 4px 12px rgba(229, 57, 53, 0.3);
+      transition: all 0.3s ease;
+    }
+    body.good .toggle-btn {
+      background-color: #2e7d32;
+      box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+    }
+    .toggle-btn:hover {
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>Are you good?</h1>
+    <div class="status-text" id="status">OFF: Not Feeling Good 🙁</div>
+    <button class="toggle-btn" id="toggleBtn" onclick="toggleGood()">Turn ON</button>
+  </div>
+
+  <script>
+    // Initialize state from localStorage (defaults to false if empty)
+    let isGood = localStorage.getItem('isGoodState') === 'true';
+
+    // Sound Generator using Web Audio API
+    let audioCtx = null;
+
+    function playTone(type) {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (type === 'on') {
+        // High happy chime sound
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15); // A5
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+      } else {
+        // Lower pitch drop sound
+        osc.frequency.setValueAtTime(440, audioCtx.currentTime); // A4
+        osc.frequency.exponentialRampToValueAtTime(220, audioCtx.currentTime + 0.15); // A3
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+      }
+    }
+
+    // Function to render UI state
+    function updateUI(shouldPlaySound = false) {
+      const statusEl = document.getElementById('status');
+      const btnEl = document.getElementById('toggleBtn');
+      const bodyEl = document.body;
+
+      if (isGood) {
+        bodyEl.classList.add('good');
+        statusEl.innerText = "ON: Feeling Good! 😊";
+        btnEl.innerText = "Turn OFF";
+        if (shouldPlaySound) playTone('on');
+      } else {
+        bodyEl.classList.remove('good');
+        statusEl.innerText = "OFF: Not Feeling Good 🙁";
+        btnEl.innerText = "Turn ON";
+        if (shouldPlaySound) playTone('off');
+      }
+    }
+
+    // Toggle button handler
+    function toggleGood() {
+      isGood = !isGood;
+      // Save updated state in browser localStorage
+      localStorage.setItem('isGoodState', isGood);
+      updateUI(true);
+    }
+
+    // Load saved state on page launch
+    updateUI(false);
+  </script>
+</body>
+</html>
